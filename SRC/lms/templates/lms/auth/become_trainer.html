@@ -1,0 +1,34 @@
+{% extends 'lms/base.html' %}
+
+{% block title %}Become Trainer | GKTCS LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0 text-center"><i class="fas fa-chalkboard-teacher me-2"></i>Become a Trainer</h3>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    By becoming a trainer, you'll be able to create and manage courses on our platform.
+                </div>
+                <p>After submitting your request, our admin team will review your application and approve it.</p>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Request
+                        </button>
+                        <a href="{% url 'lms:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

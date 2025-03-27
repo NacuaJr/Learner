@@ -1,0 +1,38 @@
+{% extends 'lms/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login | GKTCS LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0 text-center"><i class="fas fa-sign-in-alt me-2"></i>Login</h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-3 text-center">
+                    <p class="mb-1">Don't have an account? <a href="{% url 'lms:user_register' %}">Register here</a></p>
+                    <p class="mb-0">Forgot password? <a href="#">Reset it here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

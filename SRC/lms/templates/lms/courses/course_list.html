@@ -1,0 +1,68 @@
+{% extends 'lms/base.html' %}
+
+{% block title %}My Courses | GKTCS LMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-book-open me-2"></i>My Courses</h1>
+    {% if user.is_staff %}
+    <a href="{% url 'lms:course_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Create New Course
+    </a>
+    {% endif %}
+</div>
+
+{% if courses %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for course in courses %}
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm">
+            {% if course.coursedetails.course_image %}
+            <img src="{{ course.coursedetails.course_image.url }}" class="card-img-top" alt="{{ course.course_name }}" style="height: 180px; object-fit: cover;">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                <i class="fas fa-image fa-4x text-muted"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title mb-1">{{ course.course_name }}</h5>
+                    <span class="badge bg-primary">{{ course.get_category_display }}</span>
+                </div>
+                <p class="card-text text-muted small mb-2">
+                    <i class="far fa-clock me-1"></i> {{ course.created_at|date:"M d, Y" }}
+                </p>
+                <p class="card-text">
+                    {{ course.coursedetails.course_desc|truncatewords:15 }}
+                </p>
+            </div>
+            <div class="card-footer bg-white border-0">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'lms:course_details' course.slug %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i> View
+                    </a>
+                    <div>
+                        <a href="{% url 'lms:course_update' course.slug %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'lms:course_delete' course.slug %}" class="btn btn-sm btn-outline-danger ms-1">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    {% if user.is_staff %}
+    You haven't created any courses yet. <a href="{% url 'lms:course_create' %}">Create your first course</a> now!
+    {% else %}
+    You don't have any courses yet. Once you become a trainer, you can create courses.
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
