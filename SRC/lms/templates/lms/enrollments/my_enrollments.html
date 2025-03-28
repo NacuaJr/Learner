@@ -1,0 +1,41 @@
+<!-- lms/templates/lms/enrollments/my_enrollments.html -->
+{% extends 'lms/base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <h2><i class="fas fa-book-open me-2"></i>My Courses</h2>
+    
+    {% if enrollments %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+        {% for enrollment in enrollments %}
+        <div class="col">
+            <div class="card h-100">
+                {% if enrollment.course.coursedetails.course_image %}
+                <img src="{{ enrollment.course.coursedetails.course_image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ enrollment.course.course_name }}"
+                     style="height: 180px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ enrollment.course.course_name }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Enrolled on {{ enrollment.enrolled_at|date:"M d, Y" }}
+                        </small>
+                    </p>
+                    <a href="{% url 'lms:course_details' enrollment.course.slug %}" 
+                       class="btn btn-primary">
+                        Go to Course
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-4">
+        You haven't enrolled in any courses yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

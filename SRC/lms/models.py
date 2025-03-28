@@ -1,8 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save
+from django.forms import ValidationError
 from django.utils.text import slugify
 from django.urls import reverse
+# In lms/models.py
+from django.db import models
+from django.core.exceptions import ValidationError
+
 
 def course_slug_generator(sender, instance, *args, **kwargs):
     if not instance.slug:
@@ -49,4 +54,26 @@ class CourseDetails(models.Model):
     def __str__(self):
         return f"Details for {self.course_info.course_name}"
 
+
+class Enrollment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(CourseInfo, on_delete=models.CASCADE)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'course')
+
+    def clean(self):
+        # Prevent staff users from enrolling
+        if self.user.is_staff:
+            raise ValidationError("Staff members cannot enroll as learners")
+        
+        # Prevent self-enrollment
+        if self.user == self.course.user:
+            raise ValidationError("Instructors cannot enroll in their own courses")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Runs validation before saving
+        super().save(*args, **kwargs)
 pre_save.connect(course_slug_generator, sender=CourseInfo)

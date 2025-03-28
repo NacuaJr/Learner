@@ -3,10 +3,12 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, TrainerRegisterForm, CourseInfoForm, CourseDetailsForm
-from .models import CourseInfo, CourseDetails, TrainerRegistration
+from .models import CourseInfo, CourseDetails, TrainerRegistration, Enrollment
 
 def home(request):
-    return render(request, 'lms/home.html')
+    # Show all approved courses (filter out drafts if needed)
+    courses = CourseInfo.objects.all()  # Or add filters like .filter(is_published=True)
+    return render(request, 'lms/home.html', {'courses': courses})
 
 def user_register(request):
     if request.method == 'POST':
@@ -44,7 +46,10 @@ def user_login(request):
         if user is not None:
             login(request, user)
             messages.success(request, f'Welcome back {username}!')
-            return redirect('lms:course_list')
+            # Redirect to appropriate page based on user type
+            if user.is_staff:
+                return redirect('lms:course_list')
+            return redirect('lms:home')
         else:
             messages.error(request, 'Invalid username or password')
     return render(request, 'lms/auth/login.html')
@@ -69,11 +74,16 @@ def become_trainer(request):
 # Course Views
 @login_required
 def course_list(request):
-    courses = CourseInfo.objects.filter(user=request.user)
-    return render(request, 'lms/courses/course_list.html', {'courses': courses})
+    if request.user.is_staff:
+        courses = CourseInfo.objects.filter(user=request.user)
+        return render(request, 'lms/courses/course_list.html', {'courses': courses})
+    return redirect('lms:home')
 
 @login_required
 def course_create(request):
+    if not request.user.is_staff:
+        return redirect('lms:home')
+        
     if request.method == 'POST':
         form = CourseInfoForm(request.POST)
         if form.is_valid():
@@ -89,23 +99,46 @@ def course_create(request):
 
 @login_required
 def course_details(request, course_slug):
-    course = get_object_or_404(CourseInfo, slug=course_slug, user=request.user)
-    details = get_object_or_404(CourseDetails, course_info=course, user=request.user)
+    course = get_object_or_404(CourseInfo, slug=course_slug)
+    details = get_object_or_404(CourseDetails, course_info=course)
     
-    if request.method == 'POST':
-        form = CourseDetailsForm(request.POST, request.FILES, instance=details)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Course details updated!')
-            return redirect('lms:course_details', course_slug=course.slug)
-    else:
-        form = CourseDetailsForm(instance=details)
-    
-    return render(request, 'lms/courses/course_details.html', {
+    is_enrolled = False
+    if request.user.is_authenticated:
+        is_enrolled = Enrollment.objects.filter(
+            user=request.user, 
+            course=course
+        ).exists()
+
+    context = {
         'course': course,
-        'form': form,
-        'details': details
-    })
+        'details': details,
+        'is_enrolled': is_enrolled,
+    }
+    return render(request, 'lms/courses/course_details.html', context)
+
+@login_required
+def enroll_course(request, course_slug):
+    course = get_object_or_404(CourseInfo, slug=course_slug)
+    
+    # Prevent instructors from enrolling in their own courses
+    if request.user == course.user:
+        messages.error(request, "You cannot enroll in your own course!")
+        return redirect('lms:course_details', course_slug=course.slug)
+    
+    # Check if already enrolled
+    if Enrollment.objects.filter(user=request.user, course=course).exists():
+        messages.warning(request, 'You are already enrolled in this course!')
+    else:
+        Enrollment.objects.create(user=request.user, course=course)
+        messages.success(request, f'Successfully enrolled in {course.course_name}!')
+    
+    return redirect('lms:course_details', course_slug=course.slug)
+
+
+@login_required
+def my_enrollments(request):
+    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    return render(request, 'lms/enrollments/my_enrollments.html', {'enrollments': enrollments})
 
 @login_required
 def course_update(request, course_slug):

@@ -2,58 +2,43 @@
 
 {% block content %}
 <div class="hero-section bg-primary text-white py-5 mb-4">
-    <div class="container text-center">
-        <h1 class="display-4">Welcome to NACS LMS</h1>
-        <p class="lead">Revolution in Learning and Development!</p>
-        {% if not user.is_authenticated %}
-        <div class="mt-4">
-            <a href="{% url 'lms:user_register' %}" class="btn btn-light btn-lg mx-2">
-                <i class="fas fa-user-plus me-2"></i>Sign Up
-            </a>
-            <a href="{% url 'lms:login' %}" class="btn btn-outline-light btn-lg mx-2">
-                <i class="fas fa-sign-in-alt me-2"></i>Login
-            </a>
-        </div>
-        {% endif %}
-    </div>
+    <!-- ... existing hero section ... -->
 </div>
 
 <div class="container">
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-user-graduate fa-4x mb-3 text-primary"></i>
-                    <h3 class="card-title">For Learners</h3>
-                    <p class="card-text">Access high-quality courses from industry experts and enhance your skills.</p>
-                    {% if not user.is_authenticated %}
-                    <a href="{% url 'lms:user_register' %}" class="btn btn-outline-primary">Join as Learner</a>
-                    {% endif %}
+    <h2 class="mb-4">Available Courses</h2>
+    
+    {% if courses %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for course in courses %}
+        <div class="col">
+            <div class="card h-100">
+                {% if course.coursedetails.course_image %}
+                <img src="{{ course.coursedetails.course_image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ course.course_name }}"
+                     style="height: 180px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.course_name }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            By {{ course.user.get_full_name|default:course.user.username }}
+                        </small>
+                    </p>
+                    <a href="{% url 'lms:course_details' course.slug %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        View Details
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-chalkboard-teacher fa-4x mb-3 text-primary"></i>
-                    <h3 class="card-title">For Trainers</h3>
-                    <p class="card-text">Share your knowledge with the world and create impactful learning experiences.</p>
-                    {% if not user.is_authenticated %}
-                    <a href="{% url 'lms:trainer_register' %}" class="btn btn-outline-primary">Become Trainer</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-building fa-4x mb-3 text-primary"></i>
-                    <h3 class="card-title">For Organizations</h3>
-                    <p class="card-text">Upskill your workforce with our corporate training programs.</p>
-                    <a href="#" class="btn btn-outline-primary">Contact Us</a>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="alert alert-info">
+        No courses available yet. Check back later!
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

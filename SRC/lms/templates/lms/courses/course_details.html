@@ -5,85 +5,218 @@
 
 {% block content %}
 <div class="row">
+    <!-- Left Column - Course Content -->
     <div class="col-lg-8">
         <div class="card border-0 shadow mb-4">
             {% if details.course_image %}
             <img src="{{ details.course_image.url }}" class="card-img-top" alt="{{ course.course_name }}" style="max-height: 400px; object-fit: cover;">
+            {% else %}
+            <div class="bg-light text-center p-4" style="height: 200px;">
+                <i class="fas fa-book-open fa-4x text-muted mt-3"></i>
+                <p class="mt-2">No course image</p>
+            </div>
             {% endif %}
+            
             <div class="card-body">
+                <!-- Course Header -->
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h1 class="card-title mb-0">{{ course.course_name }}</h1>
                     <span class="badge bg-primary">{{ course.get_category_display }}</span>
                 </div>
-                <p class="text-muted">
-                    <i class="far fa-calendar-alt me-1"></i> Created: {{ course.created_at|date:"M d, Y" }}
-                    {% if course.updated_at != course.created_at %}
-                    | <i class="fas fa-sync-alt me-1"></i> Updated: {{ course.updated_at|date:"M d, Y" }}
-                    {% endif %}
-                </p>
                 
+                <!-- Course Metadata -->
+                <div class="d-flex flex-wrap gap-3 mb-4 text-muted">
+                    <span><i class="fas fa-user-tie me-1"></i> {{ course.user.get_full_name|default:course.user.username }}</span>
+                    <span><i class="far fa-calendar-alt me-1"></i> {{ course.created_at|date:"M d, Y" }}</span>
+                    {% if course.updated_at != course.created_at %}
+                    <span><i class="fas fa-sync-alt me-1"></i> Updated {{ course.updated_at|date:"M d, Y" }}</span>
+                    {% endif %}
+                    <span><i class="fas fa-users me-1"></i> {{ course.enrollment_set.count }} students</span>
+                </div>
+                
+                <!-- Enrollment Status Section -->
+                <div class="mb-4">
+                    {% if user.is_authenticated %}
+                        {% if user == course.user %}
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="fas fa-chalkboard-teacher fa-lg me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">You are the instructor</h5>
+                                    <p class="mb-0">Manage your course using the tools on the right</p>
+                                </div>
+                            </div>
+                        {% elif is_enrolled %}
+                            <div class="alert alert-success d-flex align-items-center">
+                                <i class="fas fa-check-circle fa-lg me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">You're enrolled!</h5>
+                                    <p class="mb-0">Access your <a href="{% url 'lms:my_enrollments' %}" class="alert-link">learning dashboard</a></p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{% url 'lms:enroll_course' course.slug %}" class="btn btn-success btn-lg w-100 py-3">
+                                <i class="fas fa-user-plus me-2"></i> Enroll in This Course
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                            <div>
+                                <a href="{% url 'lms:login' %}?next={% url 'lms:course_details' course.slug %}" class="alert-link">Log in</a> to enroll in this course
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Course Description -->
                 <div class="mt-4">
-                    <h4><i class="fas fa-align-left me-2"></i>Description</h4>
+                    <h4><i class="fas fa-align-left me-2"></i>Course Description</h4>
                     {% if details.course_desc %}
                     <div class="p-3 bg-light rounded">
                         {{ details.course_desc|linebreaks }}
                     </div>
                     {% else %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>No description provided yet.
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No description provided yet.
                     </div>
                     {% endif %}
+                </div>
+                
+                <!-- Course Curriculum (Placeholder) -->
+                <div class="mt-4">
+                    <h4><i class="fas fa-list-ol me-2"></i>Course Content</h4>
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-play-circle text-primary me-2"></i>
+                                    <span>1. Introduction to {{ course.course_name }}</span>
+                                </div>
+                                <span class="badge bg-light text-dark">10 min</span>
+                            </div>
+                        </div>
+                        <!-- Additional lessons would go here -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Right Column - Actions and Details -->
     <div class="col-lg-4">
+        <!-- Management Tools (for instructors only) -->
+        {% if user == course.user or user.is_superuser %}
         <div class="card border-0 shadow mb-4">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Course Actions</h5>
+                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Instructor Tools</h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <a href="{% url 'lms:course_update' course.slug %}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit me-2"></i>Edit Course Info
+                        <i class="fas fa-edit me-2"></i> Edit Course
                     </a>
                     <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                        <i class="fas fa-trash me-2"></i>Delete Course
+                        <i class="fas fa-trash me-2"></i> Delete Course
                     </button>
                 </div>
+                
+                <hr>
+                
+                <h6 class="mb-3"><i class="fas fa-users me-2"></i>Enrolled Students</h6>
+                {% if course.enrollment_set.all %}
+                <div class="list-group">
+                    {% for enrollment in course.enrollment_set.all|slice:":5" %}
+                    <div class="list-group-item small">
+                        {{ enrollment.user.get_full_name|default:enrollment.user.username }}
+                        <span class="text-muted float-end">{{ enrollment.enrolled_at|date:"M d" }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if course.enrollment_set.count > 5 %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">+{{ course.enrollment_set.count|add:"-5" }} more students</small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-info small mb-0">
+                    No students enrolled yet
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Course Details Card -->
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Course Details</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Category:</span>
+                        <span class="fw-bold">{{ course.get_category_display }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Created:</span>
+                        <span>{{ course.created_at|date:"M d, Y" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Last Updated:</span>
+                        <span>{{ course.updated_at|date:"M d, Y" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total Students:</span>
+                        <span>{{ course.enrollment_set.count }}</span>
+                    </li>
+                </ul>
             </div>
         </div>
         
+        <!-- Instructor Card -->
         <div class="card border-0 shadow">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-image me-2"></i>Course Details</h5>
+                <h5 class="mb-0"><i class="fas fa-user-tie me-2"></i>Instructor</h5>
             </div>
             <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>Update Details
-                        </button>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-circle fa-3x text-muted"></i>
                     </div>
-                </form>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-0">{{ course.user.get_full_name|default:course.user.username }}</h6>
+                        <small class="text-muted">Course Instructor</small>
+                    </div>
+                </div>
+                {% if user.is_authenticated and not user == course.user %}
+                <a href="#" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-envelope me-1"></i> Contact Instructor
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Modal -->
+<!-- Delete Modal (for instructors only) -->
+{% if user == course.user or user.is_superuser %}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion</h5>
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete the course <strong>"{{ course.course_name }}"</strong>?</p>
-                <p class="text-danger"><i class="fas fa-exclamation-circle me-2"></i>This action cannot be undone.</p>
+                <p>You are about to permanently delete:</p>
+                <h5 class="mb-3">"{{ course.course_name }}"</h5>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    This will remove all course content and student enrollments.
+                    <strong>This action cannot be undone.</strong>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -92,11 +225,12 @@
                 <form method="POST" action="{% url 'lms:course_delete' course.slug %}">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete
+                        <i class="fas fa-trash me-2"></i>Delete Permanently
                     </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
